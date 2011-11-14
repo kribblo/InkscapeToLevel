@@ -1,6 +1,9 @@
 Parses an Inkscape SVG file and extracts paths and positions for use in computer games (or similar).
 
-Currently Inkscape to Lua only.
+Draw the level as paths, to use as collisions and/or graphics, and add other game objects as images or draw rectangles.
+Will output paths and positions in a format suitable to be read by your game engine.
+
+Currently Inkscape to Lua only. Other formats should be easy to add.
 
 Initially based on some code found here: http://www.deluge.co/?q=inkscape-paths by bensmiley
 
