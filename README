@@ -1,0 +1,104 @@
+Parses an Inkscape SVG file and extracts paths and positions for use in computer games (or similar).
+
+Currently Inkscape to Lua only.
+
+Initially based on some code found here: http://www.deluge.co/?q=inkscape-paths by bensmiley
+
+
+CURRENT STATUS AND TODOS
+
+The program is currently Inkscape-only, as it uses the attributes inkscape:groupmode and inkscape:label to extract layers and names.
+Adding support for other generators SVG should be possible if defining the rules for those.
+
+The program currently produces a file in Lua table format, meant to be read with loadfile, see example below.
+
+The program currently outputs polygons as either points or edges (with the --edges switch). For edges, it also outputs
+the outward angle of the edge in radians.
+
+The polygons are sorted and either clockwise or counter-clockwise, but not guarantees to which it is. Should probably
+be fixed and a command line switch to ensure this for physics engines.
+
+The polygons are also slightly optimized using some hard-coded values removing too short edges and too small angles.
+
+Result is put in the same directory as input .svg with ending .level. Subject to future configuration. :)
+
+
+INSTRUCTIONS FOR INKSCAPE
+
+Create SVG document in same size as your level in pixels, for example 1024x1024. Change in Document Properties at any time.
+
+Create a new layer for each group of objects, such as collisions, player, enemies etc. Name the layers as the variables you
+want to use in your code, such as "player", "enemies", "collisions".
+
+Paths are SVG paths, such as drawn with the line tool,and can also be done with Object to Path in the path menu.
+For instance, rectangles created using the rectangle tool will not be recognized unless converted to path first, but rather
+will be interpreted as positions. Useful for drawing collisions.
+
+Position objects are imported bitmap images or rectangles drawn with the rectangle tool, typically of the same size as your
+game objects. The position extracted will be the top/left coordinate for each object. Useful for game objects.
+
+
+INSTRUCTIONS FOR BUILDING AND RUNNING
+
+Install Maven and Java.
+
+Build an executable Jar using:
+
+  mvn compile assembly:single
+  
+Run the resulting file (found in target directory) using:
+
+  java -jar <jarname> <options> <svgfile>
+
+    Options:
+    [--edges] : output edges instead of polygons for paths
+    --format value : output format (default: lua)
+    [--help -h]
+    [--image] : create PNG image from SVG
+
+
+OUTPUT
+
+Currently the LUA output is a table suitable to read with loadfile (see below) and will look something like this.
+ 
+* width and height is the size of the whole level, in pixels.
+* player is the position of one single object found in the layer "player"
+* enemies are multiple positions from layer "enemies"
+* collisions are arrays of arrays of points (x,y) or edges (x1,y1->x2,y2 + the angle in radians)
+
+    return {
+        width = 1024,
+        height = 1024,
+        player = {x=496.97314, y=0.77246094},
+        enemies = {
+            {x=0.0, y=0.0},
+            {x=337.93103, y=-188.50574},
+            {x=321.83908, y=213.79309},
+        },
+        collisions = {
+            {
+                {x1=462, y1=90, x2=442, y2=93, angle=6.134295359570089},
+                ...
+                {x1=462, y1=138, x2=462, y2=90, angle=1.5707963267948966},
+            },
+            {
+                {x1=512, y1=287, x2=489, y2=288, angle=6.2397344117880555},
+                ...
+                {x1=535, y1=288, x2=512, y2=287, angle=0.043450895391530686},
+            },
+        },
+    }
+
+
+USING FROM LUA
+
+Read level file something like this:
+
+    local f,e=loadfile(filename)
+    if f==nil then
+      print("Error loading level: "..e)
+      return f,e
+    else
+      local levelData = f()
+      return levelData
+    end
